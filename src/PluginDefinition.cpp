@@ -17,7 +17,7 @@
 
 #include "PluginDefinition.h"
 #include "menuCmdID.h"
-#include <array>
+#include <string>
 
 //
 // The plugin data that Notepad++ needs
@@ -91,6 +91,15 @@ bool setCommand(size_t index, TCHAR *cmdName, PFUNCPLUGINCMD pFunc, ShortcutKey 
     return true;
 }
 
+std::string beautify(char * src)
+{
+	using namespace std;
+	string from = src;
+	string result;
+
+	return result;
+}
+
 //----------------------------------------------//
 //-- STEP 4. DEFINE YOUR ASSOCIATED FUNCTIONS --//
 //----------------------------------------------//
@@ -108,16 +117,12 @@ void parseJson()
 
     // Say hello now :
     // Scintilla control has no Unicode mode, so we use (char *) here
-	int nLen = 0;
-	::SendMessage(curScintilla, SCI_GETLENGTH, 0, (LPARAM)&nLen);
-	//char * buf = new char[*nLen];
-	//::SendMessage(curScintilla, SCI_GETTEXT, (WPARAM)(*nLen), (LPARAM)buf);
-	//int nLen2 = 2 * (*nLen);
-	//char * buf2 = new char[nLen2];
-
-    ::SendMessage(curScintilla, SCI_SETTEXT, 0, (LPARAM)nLen);
-	//delete [] buf2;
-	//delete[] buf;
+	int nLen = ::SendMessage(curScintilla, SCI_GETLENGTH, 0, 0);
+	char * buf = new char[nLen+1];
+	::SendMessage(curScintilla, SCI_GETTEXT, nLen+1, (LPARAM)buf);
+	std::string txt = beautify(buf);
+    ::SendMessage(curScintilla, SCI_SETTEXT, 0, (LPARAM)txt.c_str());
+	delete [] buf;
 }
 
 void parseXML()
