@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <string>
 
 using namespace std;
@@ -9,12 +10,19 @@ void skipSpace(char *);
 void printTab(int, string &);
 void printError(int, string &);
 int getOffset(char *, char);
+int getNextOffset(char *, char, char);
+std::string readContent(char *);
 
 int total_pos = 0;
 
 int main() {
 	//string str("Software\"Microsoft\"Windows NT\"CurrentVersion\"Time Zones\"Eastern Standard Time");
-	char * praw = "{\"response\":{\"success\":\"true\",\"info\":\"aaaaa\"},\"extra\":[{\"name\":\"json\",\"type\":\"text\"},{\"name\":\"xml\",\"type\":\"html\"}]}";
+	//char * praw = "{\"response\":{\"success\":\"true\",\"info\":\"aaaaa\"},\"extra\":[{\"name\":\"json\",\"type\":\"text\"},{\"name\":\"xml\",\"type\":\"html\"}]}";
+	char * filename = "test.json";
+	std::string content = readContent(filename);
+	cout << content << endl;
+	char * praw = new char[content.length() + 1];
+	strcpy(praw, content.c_str());
 	char * p_start = praw;
 	//int i = 0;
 	int level = 0;
@@ -22,6 +30,7 @@ int main() {
 	int i_start = 0;
 	int i_end = strlen(praw) - 1;
 	parseObject(level, praw, i_start, i_end, result);
+	delete[] praw;
 	cout << result << endl;
 	return 1;
 }
@@ -128,6 +137,20 @@ int getOffset(char * praw, char target)
 	return offset;
 }
 
+int getNextOffset(char * praw, char target, char boundary)
+{
+	int offset = 0;
+	char c = *praw++;
+	while ('\0' != c) {
+		offset++;
+		if (target == c || boundary == c) {
+			break;
+		}
+		c = *praw++;
+	}
+	return offset;
+}
+
 void parseArray(int level, char * praw, int start, int end, string & result)
 {
 	level++;
@@ -156,6 +179,15 @@ void parseArray(int level, char * praw, int start, int end, string & result)
 			i += getOffset((char *)(praw + i + 1), ']') - 1;
 			parseArray(level, praw, tmp, i, result);
 		}
+		else {
+			printTab(level, result);
+			int tmp = i;
+			i += getNextOffset((char *)(praw + i), ',', ']') - 1;
+			for (int j = tmp; j < i; j++) {
+				result.insert(result.length(), 1, *(praw + j));
+			}
+			i--;
+		}
 	}
 	level--;
 	result.append("\r\n");
@@ -181,4 +213,20 @@ void printError(int pos, string & result)
 	char str_pos[6];
 	itoa(pos, str_pos, 10);
 	result.append("Error at:").append(str_pos);
+}
+
+std::string readContent(char * filename)
+{
+	using namespace std;
+	string result("");
+	ifstream fin(filename, ios_base::in);
+	if (fin.is_open()) {
+		char ch;
+		while (fin.get(ch))
+		{
+			result += ch;
+		}
+		fin.close();
+	}
+	return result;
 }
